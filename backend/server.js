@@ -1,4 +1,3 @@
-// backend/server.js
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -8,17 +7,34 @@ dotenv.config();
 
 const app = express();
 
-// adjust origin if your Vite dev URL is different
+// ✅ ALLOWED ORIGINS (local + Firebase Hosting)
+const allowedOrigins = [
+  "http://localhost:5173",                // local Vite
+  "https://panel-smac.web.app",           // Firebase Hosting (main)
+  "https://panel-smac.firebaseapp.com",   // Firebase alternate domain
+];
+
+// ✅ FIXED CORS CONFIG
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    credentials: true,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (Postman, server-side, etc.)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("CORS not allowed from this origin"));
+      }
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
   })
 );
 
 app.use(express.json());
 
-// routes
+// ✅ OTP ROUTES
 app.use("/api/otp", otpRoutes);
 
 const PORT = process.env.PORT || 5000;
