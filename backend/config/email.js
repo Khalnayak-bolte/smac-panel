@@ -1,24 +1,36 @@
 // backend/config/email.js
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const dotenv = require("dotenv");
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Create Resend client using API key from env
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// optional: verify transporter on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("Error with email transporter:", error.message);
-  } else {
-    console.log("Email transporter is ready to send messages");
+/**
+ * Send OTP email using Resend API
+ * @param {string} to - recipient email
+ * @param {string} otp - 6 digit OTP
+ */
+async function sendOtpEmail(to, otp) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured");
   }
-});
 
-module.exports = transporter;
+  const response = await resend.emails.send({
+    from: "SMAC <onboarding@resend.dev>", // default Resend sender
+    to,
+    subject: "Your SMAC Email OTP",
+    text: `Your OTP is: ${otp}\n\nIt is valid for 5 minutes.`,
+  });
+
+  if (response.error) {
+    throw new Error(response.error.message || "Failed to send email via Resend");
+  }
+
+  return response;
+}
+
+module.exports = {
+  sendOtpEmail,
+};

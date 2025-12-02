@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 
-const transporter = require("../config/email");
+const { sendOtpEmail } = require("../config/email"); // ✅ use Resend helper
 const generateOtp = require("../utils/generateOtp");
 const { setOtp, verifyOtp } = require("../otpStore");
 
@@ -18,21 +18,16 @@ router.post("/send", async (req, res) => {
     const otp = generateOtp(6);
     setOtp(email, otp); // store OTP in memory
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Your SMAC Email OTP",
-      text: `Your OTP is: ${otp}\n\nIt is valid for 5 minutes.`,
-    };
-
-    await transporter.sendMail(mailOptions);
+    // ✅ Send OTP via Resend (no Gmail SMTP / transporter)
+    await sendOtpEmail(email, otp);
 
     return res.json({ message: "OTP sent to email successfully" });
   } catch (error) {
     console.error("Error sending OTP email:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to send OTP email", error: error.message });
+    return res.status(500).json({
+      message: "Failed to send OTP email",
+      error: error.message,
+    });
   }
 });
 
@@ -54,9 +49,10 @@ router.post("/verify", (req, res) => {
     return res.json({ message: "OTP verified successfully" });
   } catch (error) {
     console.error("Error verifying OTP:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to verify OTP", error: error.message });
+    return res.status(500).json({
+      message: "Failed to verify OTP",
+      error: error.message,
+    });
   }
 });
 
