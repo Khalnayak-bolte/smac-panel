@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { sendOtpEmail } = require("../config/email"); // ✅ use Resend helper
+const { sendOtpEmail } = require("../config/email");
 const generateOtp = require("../utils/generateOtp");
 const { setOtp, verifyOtp } = require("../otpStore");
 
@@ -18,7 +18,7 @@ router.post("/send", async (req, res) => {
     const otp = generateOtp(6);
     setOtp(email, otp); // store OTP in memory
 
-    // ✅ Send OTP via Resend (no Gmail SMTP / transporter)
+    // Send OTP via Resend
     await sendOtpEmail(email, otp);
 
     return res.json({ message: "OTP sent to email successfully" });
